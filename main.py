@@ -1,172 +1,87 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, render_template
 import cgi
+import os
+import jinja2
+
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 
-form = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <style>
-            .error {{
-                color: red;
-            }}
-        </style>
-    </head>
-    <body>
-    <h1>Signup</h1>
-        <form method="post" action="/signup">
-            <table>
-                <tr>
-                    <td><label for="username">Username</label></td>
-                    <td>
-                        <input name="username" type="text" value="">
-                        <span class="error">{0}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td><label for="password">Password</label></td>
-                    <td>
-                        <input name="password" type="password">
-                        <span class="error">{0}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td><label for="verify">Verify Password</label></td>
-                    <td>
-                        <input name="verify" type="password">
-                        <span class="error">{0}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td><label for="email">Email (optional)</label></td>
-                    <td>
-                        <input name="email" value="">
-                        <span class="error">{0}</span>
-                    </td>
-                </tr>
-            </table>
-            <input type="submit">
-        </form>
-    </body>
-</html>
-"""
-"""
-@app.route("/signup", methonds=['POST'])
-
-def add_username():
-    new_user = request.form['username']
-
-    if len(new_user) > 20:
-        error = "{0} do not use more than 20 characters"
-
-    elif len(new_user) < 3:
-        error = "{0} do not use less than 3 characters"
-
-    return redirect ("/?error=" + error)
-
-    for char in new_user:
-        if char.isspace():
-            error = "{0} do not use a space in your username"
-        
-        return redirect ("/?error=" + error)
-
-def add_password():
-    new_password = request.form['password']
-    verify_password = request.form['verify']
-
-    if len(new_password) > 20:
-        error = "{0} password cannot be greater than 20 characters"
-
-    elif len(new_password) < 3:
-        error = "{0} password must be greater than 3 characters"
-
-    elif verify_password != new_password:
-        error = "{0} verify password must match password"
-
-    return redirect ("/?error=" + error)
-
-def add_email():
-    new_email = request.form['email']
-    needed_char = '@.'
-
-    if any char in email != needed_char:
-       error = "{0} you must provide a valid email address" 
-
-    return redirect ("/?error=" + error)
-"""
-
 @app.route("/")
 def index():
-    return form.format("")
+    return render_template('hello_form.html')
 
 
 @app.route("/signup", methods=['POST'])
 
-def add_username():
-    new_user = request.form['username']
-    error = request.args.get("error")
-
-    if new_user.isspace():
-        content ="{0} You must add a user name"
-
-    elif ' ' in new_user:
-        content = "{0} do not use a space in your user name"
-
-    elif len(new_user) < 3:
-        content = "{0} do not use less than 3 characters"
-
-    elif len(new_user) > 20:
-        content = "{0} do not use more than 20 characters"
-
-    else:
-        content = "Welcome"
-    
-    return content
-    
-def add_password():
+def add_newuser():
+    new_username = request.form['username']
     new_password = request.form['password']
     verify_password = request.form['verify']
+    new_email = request.form['email']
+    error = request.args.get("error")
 
-    if new_password.isspace():
-        error = "{0} You must add a password"
+    username_error = ''
+    password_error = ''
+    verify_error = ''
+    email_error = ''
 
-    elif len(new_password) > 20:
-        error = "{0} password cannot be greater than 20 characters"
+    if ' ' in new_username:
+        username_error = "Do not use a space in your name"
+
+    elif len(new_username) < 1:
+        username_error = "You must add a user name"
+
+    elif len(new_username) < 3:
+        username_error = "Do not use less than 3 characters in your name"
+
+    elif len(new_username) > 20:
+        username_error = "Do not use more than 20 characters"
+
+    if len(new_password) < 1:
+        password_error = "You must add a password"
 
     elif len(new_password) < 3:
-        error = "{0} password must be greater than 3 characters"
+        password_error = "Password must be greater than 3 characters"
+    
+    elif len(new_password) > 20:
+        password_error = "Password cannot be greater than 20 characters"
+
+    if len(verify_password) < 1:
+        verify_error = "You must verify your password"
 
     elif verify_password != new_password:
-        error = "{0} verify password must match password"
-
-    else:
-        error = "Super"
-
-    return error
-
-def add_email():
-    new_email = request.form['email']
+        verify_error = "Verify password must match password"
 
     if ' ' in new_email:
-        hello = "{0} do not use a space in your email"
+        email_error = "Do not use a space in your email"
+
+    elif len(new_email) < 1:
+        email_error = email_error
 
     elif len(new_email) < 3:
-        hello = "{0} your email cannot be less than 3 characters"
+        email_error = "Your email cannot be less than 3 characters"
 
     elif len(new_email) > 20:
-        hello = "{0} your email cannot be more than 20 characters"
+        email_error = "Your email cannot be more than 20 characters"
 
     elif '@' not in new_email:
-        hello = "{0} you must use a @ in your email"
+        email_error = "You must use a @ in your email"
 
     elif '.' not in new_email:
-        hello = "{0} you must use a . in your email"
+        email_error = "You must use a . in your email"
 
-    else:
-        hello = "Welcome"
-    
-    return hello
+    if not username_error and not password_error and not verify_error and not email_error:
+        return render_template('greeting.html',
+        new_username = new_username
+        )
+
+    return render_template('hello_form.html', 
+    username_error = username_error, 
+    password_error = password_error,
+    verify_error = verify_error,
+    email_error = email_error
+    )
+
 
 app.run()
